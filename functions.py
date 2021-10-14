@@ -76,3 +76,18 @@ def ordinal_encoder(input_df: pd.DataFrame) -> pd.DataFrame:
     output_df = output_df.infer_objects()
     
     return output_df
+
+
+def imbalanced_features(input_df: pd.DataFrame) -> pd.DataFrame:
+    """Takes in pandas dataframe and returns another pandas dataframe
+    with removed columns where quantity of one value comprises 
+    more than 95 pct. of all values.
+    """
+    
+    feature_names = [column for column in input_df]
+    qty_most_freq_val_perc = [input_df[column].value_counts().iloc[0] / len(input_df) * 100 for column in input_df]
+    most_common_feature = [feature for feature, perc in zip(feature_names, qty_most_freq_val_perc) if perc > 95]
+    
+    output_df = input_df.drop(columns=most_common_feature)
+    
+    return output_df
