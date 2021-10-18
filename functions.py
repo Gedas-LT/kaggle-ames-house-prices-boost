@@ -4,7 +4,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder
 
-from global_ import none_features, zero_features, quality_categories, quality_features
+from global_ import none_features, zero_features, quality_categories, quality_features, sqrt_features, house_area_features
 
 def data_imputer(input_df: pd.DataFrame) -> pd.DataFrame:
     """Takes in pandas dataframe, fills the missing values and returns pandas dataframe again.
@@ -78,16 +78,33 @@ def ordinal_encoder(input_df: pd.DataFrame) -> pd.DataFrame:
     return output_df
 
 
-def imbalanced_features(input_df: pd.DataFrame) -> pd.DataFrame:
-    """Takes in pandas dataframe and returns another pandas dataframe
-    with removed columns where quantity of one value comprises 
-    more than 95 pct. of all values.
+def articial_features(input_df: pd.DataFrame) -> pd.DataFrame:
+    """Takes in pandas dataframe and return pandas dataframe with 
+    additional features.
+    
+     Also requires global variables which are imported from separate file.
     """
     
-    feature_names = [column for column in input_df]
-    qty_most_freq_val_perc = [input_df[column].value_counts().iloc[0] / len(input_df) * 100 for column in input_df]
-    most_common_feature = [feature for feature, perc in zip(feature_names, qty_most_freq_val_perc) if perc > 95]
+    # Age features.
+    input_df["GarageAge"] = input_df["YrSold"] - input_df["GarageYrBlt"]
+    input_df["HouseAge"] = input_df["YrSold"] - input_df["YearBuilt"]
     
-    output_df = input_df.drop(columns=most_common_feature)
+    # SQRT features.
+    for feature in sqrt_features:
+        input_df[f"{feature}_Sqrt"] = np.sqrt(input_df[feature])
     
-    return output_df
+    # TotalHouseArea feature.
+    input_df["TotalHouseArea"] = 0
+    for feature in house_area_features:
+        input_df["TotalHouseArea"] += input_df[feature]
+        
+    # Merged Area and Quality feature.
+    input_df["AreaQuality"] = input_df["TotalHouseArea"] * input_df["OverallQual"]
+    
+    # Merged Area and Age feature.
+    input_df["AreaAge"] = input_df["TotalHouseArea"] * input_df["HouseAge"]
+    
+    # Merged Quality and Condition feature.
+    input_df["OverallQualandCond"] = input_df["OverallQual"] + input_df["OverallCond"]
+    
+    return input_df
