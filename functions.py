@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing import OrdinalEncoder, PolynomialFeatures
 
 from global_ import none_features, zero_features, quality_categories, quality_features, sqrt_features, house_area_features
 
@@ -108,3 +108,24 @@ def articial_features(input_df: pd.DataFrame) -> pd.DataFrame:
     input_df["OverallQualandCond"] = input_df["OverallQual"] + input_df["OverallCond"]
     
     return input_df
+
+
+def polynomial_features(input_df):
+    """Takes in pandas dataframe and return pandas dataframe with 
+    additional polynomial so called features.
+    """
+    
+    numerical_features = [column for column in input_df if (input_df[column].dtypes == "int64") or (input_df[column].dtypes == "float64")]
+
+    poly = PolynomialFeatures(2, include_bias=False)
+    poly_array = poly.fit_transform(input_df[numerical_features])
+    poly_columns = poly.get_feature_names_out(numerical_features)
+
+    poly_data = pd.DataFrame(poly_array, columns=poly_columns)
+
+    all_features = [column for column in input_df]
+    poly_data = poly_data.drop(columns=all_features, errors="ignore")
+
+    train_poly_data = input_df.join(poly_data)
+    
+    return train_poly_data
