@@ -4,41 +4,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder, PolynomialFeatures
 
-from global_ import none_features, zero_features, quality_categories, quality_features, sqrt_features, house_area_features
-
-def data_imputer(input_df: pd.DataFrame) -> pd.DataFrame:
-    """Takes in pandas dataframe, fills the missing values and returns pandas dataframe again.
-    
-    Also requires two global variables which are imported from separate file.
-    """
-    
-    global none_features
-    global zero_features
-    
-    column_imputer = ColumnTransformer(
-    transformers=[
-        ("constant_cat_inputer", SimpleImputer(missing_values=np.nan, strategy="constant", fill_value="None"), none_features),
-        ("constant_num_inputer", SimpleImputer(missing_values=np.nan, strategy="constant", fill_value=0), zero_features)
-        ], 
-    remainder=SimpleImputer(missing_values=np.nan, strategy="most_frequent")
-    )
-    
-    array = column_imputer.fit_transform(input_df)
-
-    features = []
-    features.extend(none_features)
-    features.extend(zero_features)
-
-    for col in input_df:
-        if col not in features:
-            features.append(col)
-    
-    output_df = pd.DataFrame(array, columns=features)
-    
-    output_df = output_df.infer_objects()
-    
-    return output_df
-
 
 def ordinal_encoder(input_df: pd.DataFrame) -> pd.DataFrame:
     """Takes in pandas dataframe and return pandas dataframe with encoded ordinal features.
@@ -78,9 +43,9 @@ def ordinal_encoder(input_df: pd.DataFrame) -> pd.DataFrame:
     return output_df
 
 
-def articial_features(input_df: pd.DataFrame) -> pd.DataFrame:
-    """Takes in pandas dataframe and return pandas dataframe with 
-    additional features.
+def articial_features(input_df: pd.DataFrame, sqrt_features: list, area_features: list) -> pd.DataFrame:
+    """Takes in pandas dataframe, two lists with name of features and 
+    returns pandas dataframe with additional features.
     
      Also requires global variables which are imported from separate file.
     """
@@ -95,7 +60,7 @@ def articial_features(input_df: pd.DataFrame) -> pd.DataFrame:
     
     # TotalHouseArea feature.
     input_df["TotalHouseArea"] = 0
-    for feature in house_area_features:
+    for feature in area_features:
         input_df["TotalHouseArea"] += input_df[feature]
         
     # Merged Area and Quality feature.
