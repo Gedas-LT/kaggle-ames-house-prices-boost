@@ -1,46 +1,32 @@
 import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
-from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder, PolynomialFeatures
 
 
-def ordinal_encoder(input_df: pd.DataFrame) -> pd.DataFrame:
-    """Takes in pandas dataframe and return pandas dataframe with encoded ordinal features.
-    
-    Also requires two global variables which are imported from separate file.
+def merger(input_df: pd.DataFrame) -> pd.DataFrame:
+    """Takes in pandas dataframe and return pandas dataframe with merged values.
     """
     
-    global quality_categories
-    global quality_features
+    input_df["Functional"] = input_df["Functional"].replace(["Min1", "Min2"], "Min")
+    input_df["LandContour"] = input_df["LandContour"].replace("Lvl", "Flat")
+    input_df["LandContour"] = input_df["LandContour"].replace(["Bnk", "HLS", "Low"], "NotFlat")
+    input_df["Condition1"] = input_df["Condition1"].replace(["RRAn", "RRAe", "RRNn", "RRNe"], "RR")
+    input_df["Exterior2nd"] = input_df["Exterior2nd"].replace(["CmentBd", "HdBoard"], "Board")
+    input_df["SaleType"] = input_df["SaleType"].replace(["ConLw", "ConLD", "ConLI"], "Con")
     
-    def shape_transformer(categories: list, features: list) -> np.array:
-        categories_arr = np.array([categories])
-        repeated_categories_arr = np.repeat(categories_arr, len(features), axis=0)
+    return input_df
+
+
+def shape_transformer(categories: list, features: list) -> np.array:
+    """Takes in lists of categories and features for OrdincalEncoder and 
+    returns list of array-like suitable for OrdincalEncoder categories parameter.
+    """
         
-        return repeated_categories_arr
+    categories_arr = np.array([categories])
+    repeated_categories_arr = np.repeat(categories_arr, len(features), axis=0)
     
-    column_imputer = ColumnTransformer(
-    transformers=[
-        ("quality_ordinal_encoder", OrdinalEncoder(categories=list(shape_transformer(quality_categories, quality_features))), quality_features)
-        ], 
-    remainder="passthrough"
-    )
-    
-    array = column_imputer.fit_transform(input_df)
-
-    features = []
-    features.extend(quality_features)
-
-    for col in input_df:
-        if col not in features:
-            features.append(col)
-    
-    output_df = pd.DataFrame(array, columns=features)
-    
-    output_df = output_df.infer_objects()
-    
-    return output_df
+    return repeated_categories_arr
 
 
 def articial_features(input_df: pd.DataFrame, sqrt_features: list, area_features: list) -> pd.DataFrame:
